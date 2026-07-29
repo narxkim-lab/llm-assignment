@@ -63,7 +63,7 @@ $$
 
 논문 주장
 
-```
+```python
 Var(q·k) = d_k
 ```
 
@@ -91,13 +91,13 @@ Var(q·k) = d_k
 
 Softmax에
 
-```
+```python
 QKᵀ
 ```
 
 를 그대로 넣었을 때와
 
-```
+```python
 QKᵀ / √dₖ
 ```
 
