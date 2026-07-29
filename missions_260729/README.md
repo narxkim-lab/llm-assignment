@@ -51,9 +51,9 @@ Attention은 Q와 K의 유사도를 계산한 뒤, 중요한 V를 가져오는 �
 
 Transformer 논문에서 사용하는
 
-\[
+$$
 \frac{QK^T}{\sqrt{d_k}}
-\]
+$$
 
 가 필요한 이유를 직접 실험한다.
 
