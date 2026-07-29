@@ -1,6 +1,6 @@
 # Attention Mission
 
-Transformer 논문 **"Attention Is All You Need"**의 핵심 아이디어를 직접 구현하고 실험하며 이해하기 위한 미션이다.
+Transformer 논문 "**Attention Is All You Need**"의 핵심 아이디어를 직접 구현하고 실험하며 이해하기 위한 미션이다.
 
 ---
 
