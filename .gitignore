@@ -18,3 +18,7 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Windows 메타데이터 파일
+*:Zone.Identifier
+*/*:Zone.Identifier
