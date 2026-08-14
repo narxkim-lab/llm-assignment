@@ -20,78 +20,55 @@ st.set_page_config(
 
 st.markdown(
     """
-    <style>
+<style>
 
-    /* 전체 화면 폭 */
-    .block-container {
-        max-width: 1200px;
-        padding-top: 2rem;
-        padding-bottom: 3rem;
-    }
+/* 전체 화면 폭 */
+.block-container {
+    max-width: 1200px;
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+}
 
-    /* 상단 타이틀 */
-    .detective-header {
-        padding: 30px;
-        border-radius: 18px;
-        background: linear-gradient(
-            135deg,
-            #111827,
-            #1f2937
-        );
-        text-align: center;
-        margin-bottom: 25px;
-        border: 1px solid #374151;
-    }
+/* 상단 타이틀 */
+.detective-header {
+    padding: 30px;
+    border-radius: 18px;
+    background: linear-gradient(
+        135deg,
+        #111827,
+        #1f2937
+    );
+    text-align: center;
+    margin-bottom: 25px;
+    border: 1px solid #374151;
+}
 
-    .detective-header h1 {
-        margin: 0;
-        font-size: 42px;
-        color: #f9fafb;
-    }
+.detective-header h1 {
+    margin: 0;
+    font-size: 42px;
+    color: #f9fafb;
+}
 
-    .detective-header p {
-        margin-top: 8px;
-        margin-bottom: 0;
-        color: #d1d5db;
-        font-size: 16px;
-    }
+.detective-header p {
+    margin-top: 8px;
+    margin-bottom: 0;
+    color: #d1d5db;
+    font-size: 16px;
+}
 
-    /* 사건 브리핑 */
-    .case-card {
-        padding: 22px;
-        border-radius: 16px;
-        border: 1px solid #4b5563;
-        margin-bottom: 18px;
-        background-color: rgba(31, 41, 55, 0.18);
-    }
+/* 사이드바 버튼 */
+div[data-testid="stSidebar"] button {
+    border-radius: 10px;
+}
 
-    .case-title {
-        font-size: 25px;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
+/* 채팅창 여백 */
+div[data-testid="stChatMessage"] {
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+}
 
-    .case-description {
-        opacity: 0.85;
-        line-height: 1.7;
-    }
-
-    /* 작은 안내 카드 */
-    .guide-card {
-        padding: 16px;
-        border-radius: 12px;
-        border-left: 4px solid #f59e0b;
-        background-color: rgba(245, 158, 11, 0.08);
-        margin-bottom: 18px;
-    }
-
-    /* 사이드바 버튼 */
-    div[data-testid="stSidebar"] button {
-        border-radius: 10px;
-    }
-
-    </style>
-    """,
+</style>
+""",
     unsafe_allow_html=True
 )
 
@@ -106,31 +83,81 @@ API_MODEL = "gpt-5.4-nano"
 
 
 # ===================================
+# 공통 게임 규칙
+# ===================================
+
+GAME_RULES = """
+너는 추리 게임의 진행자다.
+
+절대로 일반적인 AI 챗봇처럼 행동하지 마라.
+현재 진행 중인 사건과 관련된 대화만 진행한다.
+
+반드시 다음 규칙을 지켜라.
+
+1. 사용자는 사건을 조사하는 탐정이다.
+
+2. 너는 사건의 진행자이며
+   사건 정보와 진실을 알고 있다.
+
+3. 범인은 사용자가 직접 추리해야 한다.
+   사용자가 정답을 제출하기 전에는
+   범인의 이름을 절대로 직접 알려 주지 않는다.
+
+4. 사용자가 질문하면
+   해당 질문과 관련된 단서를 최대 하나만 공개한다.
+
+5. 한 번에 여러 핵심 단서를 공개하지 않는다.
+
+6. 사용자가 아직 질문하지 않은 핵심 단서를
+   임의로 먼저 공개하지 않는다.
+
+7. 사용자가 "단서 정리"라고 입력하면
+   지금까지 실제 대화에서 공개한 단서만 정리한다.
+   아직 공개하지 않은 단서는 포함하지 않는다.
+
+8. 사용자가 "범인은 ○○다"라고 입력하면
+   정답 여부를 판정한다.
+
+9. 사용자가 틀린 범인을 지목했다면
+   정답을 알려 주지 않는다.
+   "틀렸습니다. 다른 단서를 조사해 보세요."
+   정도로만 답한다.
+
+10. 사용자가 맞는 범인을 지목했다면
+    반드시 답변에 "정답입니다"라는 표현을 포함한다.
+
+11. 범인을 맞힌 뒤에는
+    지금까지의 핵심 단서를 근거로
+    왜 그 사람이 범인인지 간단하게 설명한다.
+
+12. 사건과 관련 없는 질문에는 다음과 같이 답한다.
+
+    "현재는 사건 수사 중입니다. 사건과 관련된 질문만 해 주세요."
+
+13. 답변은 최대 3문장으로 작성한다.
+
+14. 존재하지 않는 새로운 인물이나 단서를 임의로 만들지 않는다.
+"""
+
+
+# ===================================
 # 사건 목록
 # ===================================
 
 CASES = [
     {
         "title": "💎 사라진 다이아몬드",
-        "suspects": ["집사", "요리사", "정원사"],
-        "description": """
-        저택에서 값비싼 다이아몬드가 사라졌다.
-        사건 당시 저택에는 집사, 요리사, 정원사가 있었다.
-        세 사람의 진술과 현장의 단서를 조사해 범인을 찾아야 한다.
-        """,
+        "suspects": [
+            "집사",
+            "요리사",
+            "정원사"
+        ],
+        "description": (
+            "저택에서 값비싼 다이아몬드가 사라졌다.\n\n"
+            "사건 당시 저택에는 집사, 요리사, 정원사가 있었다.\n\n"
+            "세 사람의 진술과 현장의 단서를 조사해 범인을 찾아야 한다."
+        ),
         "prompt": """
-너는 추리 게임 진행자다.
-
-게임 규칙
-- 범인을 직접 알려 주지 않는다.
-- 사용자가 질문하면 관련된 단서를 하나씩 제공한다.
-- 한 번에 지나치게 많은 단서를 공개하지 않는다.
-- 아직 공개하지 않은 핵심 단서를 먼저 말하지 않는다.
-- 사용자가 '단서 정리'를 요청하면 지금까지 대화에서 공개된 단서만 정리한다.
-- 사용자가 '범인은 ○○다'라고 입력하면 정답 여부를 판정한다.
-- 틀렸다면 정답을 알려 주지 않고 다시 추리할 기회를 준다.
-- 답변은 최대 3문장으로 작성한다.
-
 범인은 정원사다.
 
 사건 정보
@@ -152,25 +179,17 @@ CASES = [
 
     {
         "title": "🖼️ 박물관 그림 도난 사건",
-        "suspects": ["경비원", "관장", "청소부"],
-        "description": """
-        폐관 직후 박물관의 대표 작품 한 점이 사라졌다.
-        출입 가능성이 있었던 사람은 경비원, 관장, 청소부다.
-        각자의 알리바이와 현장 흔적을 조사해야 한다.
-        """,
+        "suspects": [
+            "경비원",
+            "관장",
+            "청소부"
+        ],
+        "description": (
+            "폐관 직후 박물관의 대표 작품 한 점이 사라졌다.\n\n"
+            "출입 가능성이 있었던 사람은 경비원, 관장, 청소부다.\n\n"
+            "각자의 알리바이와 현장 흔적을 조사해야 한다."
+        ),
         "prompt": """
-너는 추리 게임 진행자다.
-
-게임 규칙
-- 범인을 직접 알려 주지 않는다.
-- 사용자가 질문하면 관련된 단서를 하나씩 제공한다.
-- 한 번에 지나치게 많은 단서를 공개하지 않는다.
-- 아직 공개하지 않은 핵심 단서를 먼저 말하지 않는다.
-- 사용자가 '단서 정리'를 요청하면 지금까지 대화에서 공개된 단서만 정리한다.
-- 사용자가 '범인은 ○○다'라고 입력하면 정답 여부를 판정한다.
-- 틀렸다면 정답을 알려 주지 않고 다시 추리할 기회를 준다.
-- 답변은 최대 3문장으로 작성한다.
-
 범인은 청소부다.
 
 사건 정보
@@ -192,25 +211,17 @@ CASES = [
 
     {
         "title": "📝 시험지 유출 사건",
-        "suspects": ["교사", "학생", "행정 직원"],
-        "description": """
-        중요한 시험을 하루 앞두고 시험 문제가 외부로 유출됐다.
-        시험 파일에 접근할 수 있었던 세 사람이 용의선상에 올랐다.
-        파일 기록과 진술을 비교해 범인을 찾아야 한다.
-        """,
+        "suspects": [
+            "교사",
+            "학생",
+            "행정 직원"
+        ],
+        "description": (
+            "중요한 시험을 하루 앞두고 시험 문제가 외부로 유출됐다.\n\n"
+            "시험 파일에 접근할 수 있었던 세 사람이 용의선상에 올랐다.\n\n"
+            "파일 기록과 진술을 비교해 범인을 찾아야 한다."
+        ),
         "prompt": """
-너는 추리 게임 진행자다.
-
-게임 규칙
-- 범인을 직접 알려 주지 않는다.
-- 사용자가 질문하면 관련된 단서를 하나씩 제공한다.
-- 한 번에 지나치게 많은 단서를 공개하지 않는다.
-- 아직 공개하지 않은 핵심 단서를 먼저 말하지 않는다.
-- 사용자가 '단서 정리'를 요청하면 지금까지 대화에서 공개된 단서만 정리한다.
-- 사용자가 '범인은 ○○다'라고 입력하면 정답 여부를 판정한다.
-- 틀렸다면 정답을 알려 주지 않고 다시 추리할 기회를 준다.
-- 답변은 최대 3문장으로 작성한다.
-
 범인은 행정 직원이다.
 
 사건 정보
@@ -232,25 +243,17 @@ CASES = [
 
     {
         "title": "💍 호텔 보석 절도 사건",
-        "suspects": ["투숙객", "직원", "매니저"],
-        "description": """
-        호텔 객실에서 고가의 보석이 사라졌다.
-        사건 시간에 해당 층을 오갈 수 있었던 사람은 세 명이다.
-        객실 출입 기록과 CCTV를 조사해야 한다.
-        """,
+        "suspects": [
+            "투숙객",
+            "직원",
+            "매니저"
+        ],
+        "description": (
+            "호텔 객실에서 고가의 보석이 사라졌다.\n\n"
+            "사건 시간에 해당 층을 오갈 수 있었던 사람은 세 명이다.\n\n"
+            "객실 출입 기록과 CCTV를 조사해야 한다."
+        ),
         "prompt": """
-너는 추리 게임 진행자다.
-
-게임 규칙
-- 범인을 직접 알려 주지 않는다.
-- 사용자가 질문하면 관련된 단서를 하나씩 제공한다.
-- 한 번에 지나치게 많은 단서를 공개하지 않는다.
-- 아직 공개하지 않은 핵심 단서를 먼저 말하지 않는다.
-- 사용자가 '단서 정리'를 요청하면 지금까지 대화에서 공개된 단서만 정리한다.
-- 사용자가 '범인은 ○○다'라고 입력하면 정답 여부를 판정한다.
-- 틀렸다면 정답을 알려 주지 않고 다시 추리할 기회를 준다.
-- 답변은 최대 3문장으로 작성한다.
-
 범인은 투숙객이다.
 
 사건 정보
@@ -273,24 +276,48 @@ CASES = [
 
 
 # ===================================
+# 사건 프롬프트 생성
+# ===================================
+
+def build_system_prompt(case):
+
+    return (
+        GAME_RULES
+        + "\n\n"
+        + case["prompt"]
+    )
+
+
+# ===================================
 # 사건 / 메시지 초기화
 # ===================================
 
 if "case_index" not in st.session_state:
-    st.session_state.case_index = random.randrange(len(CASES))
+
+    st.session_state.case_index = random.randrange(
+        len(CASES)
+    )
+
 
 if "messages" not in st.session_state:
-    current_case = CASES[st.session_state.case_index]
+
+    current_case = CASES[
+        st.session_state.case_index
+    ]
 
     st.session_state.messages = [
         {
             "role": "system",
-            "content": current_case["prompt"]
+            "content": build_system_prompt(
+                current_case
+            )
         }
     ]
 
 
-current_case = CASES[st.session_state.case_index]
+current_case = CASES[
+    st.session_state.case_index
+]
 
 
 # ===================================
@@ -299,11 +326,11 @@ current_case = CASES[st.session_state.case_index]
 
 st.markdown(
     """
-    <div class="detective-header">
-        <h1>🕵️ DETECTIVE AI</h1>
-        <p>The Mystery Case Files</p>
-    </div>
-    """,
+<div class="detective-header">
+    <h1>🕵️ DETECTIVE AI</h1>
+    <p>The Mystery Case Files</p>
+</div>
+""",
     unsafe_allow_html=True
 )
 
@@ -314,21 +341,23 @@ st.markdown(
 
 with st.sidebar:
 
-    st.markdown("## 🗂️ CASE FILE")
+    st.markdown(
+        "## 🗂️ CASE FILE"
+    )
 
     st.markdown(
-        f"""
-### {current_case["title"]}
-
-**현재 용의자**
-
-👤 {current_case["suspects"][0]}
-
-👤 {current_case["suspects"][1]}
-
-👤 {current_case["suspects"][2]}
-"""
+        f"### {current_case['title']}"
     )
+
+    st.markdown(
+        "**현재 용의자**"
+    )
+
+    for suspect in current_case["suspects"]:
+
+        st.write(
+            f"👤 {suspect}"
+        )
 
     st.divider()
 
@@ -348,10 +377,9 @@ with st.sidebar:
 ### 📜 게임 규칙
 
 - 질문을 통해 정보를 수집합니다.
-- AI는 단서를 조금씩 공개합니다.
-- `단서 정리`로 정보를 정리할 수 있습니다.
-- 범인을 찾았다면  
-  `범인은 ○○다`라고 입력하세요.
+- AI는 단서를 하나씩 공개합니다.
+- `단서 정리`로 공개된 정보를 정리할 수 있습니다.
+- 범인을 찾았다면 `범인은 ○○다`라고 입력하세요.
 """
     )
 
@@ -362,26 +390,34 @@ with st.sidebar:
         use_container_width=True
     ):
 
-        # 현재 사건과 다른 사건 선택
+        # 현재 사건을 제외한 사건 목록
         available_indexes = [
             index
-            for index in range(len(CASES))
-            if index != st.session_state.case_index
+            for index in range(
+                len(CASES)
+            )
+            if index
+            != st.session_state.case_index
         ]
 
-        st.session_state.case_index = random.choice(
-            available_indexes
+        # 새로운 사건 선택
+        st.session_state.case_index = (
+            random.choice(
+                available_indexes
+            )
         )
 
         new_case = CASES[
             st.session_state.case_index
         ]
 
-        # 새로운 사건으로 대화 초기화
+        # 대화 기록도 새로운 사건으로 초기화
         st.session_state.messages = [
             {
                 "role": "system",
-                "content": new_case["prompt"]
+                "content": build_system_prompt(
+                    new_case
+                )
             }
         ]
 
@@ -389,89 +425,113 @@ with st.sidebar:
 
 
 # ===================================
-# 메인 화면 - 사건 브리핑
+# 사건 브리핑
 # ===================================
 
-st.markdown(
-    f"""
-    <div class="case-card">
+with st.container(
+    border=True
+):
 
-        <div class="case-title">
-            📜 사건 브리핑
-        </div>
+    st.markdown(
+        "### 📜 사건 브리핑"
+    )
 
-        <h3>{current_case["title"]}</h3>
+    st.markdown(
+        f"## {current_case['title']}"
+    )
 
-        <div class="case-description">
-            {current_case["description"]}
-        </div>
-
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+    st.write(
+        current_case["description"]
+    )
 
 
 # ===================================
 # 용의자 카드
 # ===================================
 
-st.subheader("👥 주요 용의자")
+st.markdown(
+    "### 👥 주요 용의자"
+)
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3 = st.columns(
+    3
+)
 
-with col1:
-    st.metric(
-        label="용의자 01",
-        value=f"👤 {current_case['suspects'][0]}"
-    )
+suspect_columns = [
+    col1,
+    col2,
+    col3
+]
 
-with col2:
-    st.metric(
-        label="용의자 02",
-        value=f"👤 {current_case['suspects'][1]}"
-    )
 
-with col3:
-    st.metric(
-        label="용의자 03",
-        value=f"👤 {current_case['suspects'][2]}"
-    )
+for index, (
+    column,
+    suspect
+) in enumerate(
+    zip(
+        suspect_columns,
+        current_case["suspects"]
+    ),
+    start=1
+):
+
+    with column:
+
+        with st.container(
+            border=True
+        ):
+
+            st.caption(
+                f"SUSPECT {index:02d}"
+            )
+
+            st.markdown(
+                f"### 👤 {suspect}"
+            )
+
+            st.caption(
+                "조사 필요"
+            )
 
 
 # ===================================
 # 처음 접속했을 때 안내
 # ===================================
 
-if len(st.session_state.messages) == 1:
+if len(
+    st.session_state.messages
+) == 1:
 
-    st.markdown(
-        """
-        <div class="guide-card">
+    with st.container(
+        border=True
+    ):
 
-        <b>🔍 수사를 시작하세요.</b><br><br>
+        st.markdown(
+            "### 🔍 수사를 시작하세요"
+        )
 
-        용의자의 알리바이, 사건 현장,
-        발견된 물건 등에 대해 질문할 수 있습니다.<br>
+        st.write(
+            """
+용의자의 알리바이, 사건 현장,
+발견된 물건 등에 대해 질문할 수 있습니다.
 
-        충분한 단서를 확보했다면
-        <b>"범인은 ○○다"</b>라고 추리해 보세요.
+충분한 단서를 확보했다면
+**"범인은 ○○다"**라고 추리해 보세요.
+"""
+        )
 
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+        st.markdown(
+            "**💡 질문 예시**"
+        )
 
-    st.markdown(
-        """
-**💡 질문 예시**
-
-- 집사는 사건 당시 어디에 있었어?
+        st.markdown(
+            """
+- 첫 번째 용의자는 사건 당시 어디에 있었어?
 - 사건 현장에서 발견된 물건이 있어?
-- 정원사에 대한 단서를 알려 줘.
+- 세 번째 용의자에 대한 단서를 알려 줘.
 - 단서 정리.
 """
-    )
+        )
 
 
 st.divider()
@@ -481,11 +541,15 @@ st.divider()
 # 수사 기록
 # ===================================
 
-st.subheader("🔎 수사 기록")
+st.markdown(
+    "### 🔎 수사 기록"
+)
 
 
 # 이전 대화 출력
-for msg in st.session_state.messages:
+for msg in (
+    st.session_state.messages
+):
 
     if msg["role"] == "system":
         continue
@@ -496,16 +560,21 @@ for msg in st.session_state.messages:
             "user",
             avatar="🕵️"
         ):
+
             st.write(
                 msg["content"]
             )
 
-    elif msg["role"] == "assistant":
+    elif (
+        msg["role"]
+        == "assistant"
+    ):
 
         with st.chat_message(
             "assistant",
             avatar="📁"
         ):
+
             st.write(
                 msg["content"]
             )
@@ -522,7 +591,10 @@ prompt = st.chat_input(
 
 if prompt:
 
+    # -----------------------------------
     # 사용자 메시지 저장
+    # -----------------------------------
+
     st.session_state.messages.append(
         {
             "role": "user",
@@ -530,12 +602,19 @@ if prompt:
         }
     )
 
-    # 사용자 메시지 표시
+    # -----------------------------------
+    # 사용자 메시지 화면 출력
+    # -----------------------------------
+
     with st.chat_message(
         "user",
         avatar="🕵️"
     ):
-        st.write(prompt)
+
+        st.write(
+            prompt
+        )
+
 
     # ===================================
     # OpenAI API 호출
@@ -545,13 +624,24 @@ if prompt:
         "사건 기록을 조사하는 중... 🔍"
     ):
 
-        response = client.chat.completions.create(
-            model=API_MODEL,
-            messages=st.session_state.messages,
-            max_completion_tokens=400
+        response = (
+            client.chat.completions.create(
+                model=API_MODEL,
+                messages=(
+                    st.session_state.messages
+                ),
+                max_completion_tokens=400
+            )
         )
 
-    answer = response.choices[0].message.content
+
+    answer = (
+        response
+        .choices[0]
+        .message
+        .content
+    )
+
 
     # ===================================
     # AI 응답 출력
@@ -561,9 +651,16 @@ if prompt:
         "assistant",
         avatar="📁"
     ):
-        st.write(answer)
 
+        st.write(
+            answer
+        )
+
+
+    # ===================================
     # AI 응답 저장
+    # ===================================
+
     st.session_state.messages.append(
         {
             "role": "assistant",
@@ -571,11 +668,11 @@ if prompt:
         }
     )
 
+
     # ===================================
     # 정답 연출
     # ===================================
 
-    # AI가 정답이라고 판정한 경우
     if (
         "정답입니다" in answer
         or "사건을 해결" in answer
